@@ -4,6 +4,7 @@ import { findEmptyEntry, emailValidation, passwordValidation } from "../utils/He
 import { User } from '../models/user.model.js';
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import fs from 'fs';
 
 // step to register user
 // req will have all the data send to register a user
@@ -40,14 +41,17 @@ const registerUser = asyncHandler(async(req, res) => {
     console.log("existing user is: ", existingUser);
 
     if(existingUser) {
+        const avatarLocalPath = req.files?.avatar[0]?.path;
+        fs.unlinkSync(avatarLocalPath);
+        if(req.files && Array.isArray(req.files.coverImage)) {
+            const coverImageLocalPath = req.files?.coverImage[0]?.path;
+            fs.unlinkSync(coverImageLocalPath);
+        }
         throw new ApiErrors(409, "existing user");
     }
 
-    const avatarLocalPath = req.files?.avatar[0]?.path;
-    console.log(req.files?.avatar[0]?.path);
-
     let coverImageLocalPath, coverImage;
-
+    const avatarLocalPath = req.files?.avatar[0]?.path;
     if(req.files && Array.isArray(req.files.coverImage)) {
         coverImageLocalPath = req.files?.coverImage[0]?.path;
         coverImage = await uploadOnCloudinary(coverImageLocalPath);
@@ -58,6 +62,9 @@ const registerUser = asyncHandler(async(req, res) => {
     }
 
     const avatar = await uploadOnCloudinary(avatarLocalPath);
+
+
+    console.log(req.files?.avatar[0]?.path);
     
     // if(coverImageLocalPath) {
     //     coverImage = await uploadOnCloudinary(coverImageLocalPath);
